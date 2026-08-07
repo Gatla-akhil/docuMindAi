@@ -8,7 +8,7 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (fs.existsSync('frontend/package.json')) { cp.execSync('npm run build --prefix frontend', {stdio:'inherit'}); } else { cp.execSync('npx vite build', {stdio:'inherit'}); }\""
+    "build": "cd frontend && npm install && npx vite build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
