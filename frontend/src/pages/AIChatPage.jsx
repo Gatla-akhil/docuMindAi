@@ -10,7 +10,6 @@ import {
   Bot,
   User,
   Sparkles,
-  HelpCircle,
   Loader2
 } from 'lucide-react';
 
@@ -32,10 +31,11 @@ const AIChatPage = () => {
     const fetchUserDocuments = async () => {
       try {
         const res = await api.get('/documents?limit=50');
-        const docs = res.data.data.documents;
+        const docs = res.data.data.documents || [];
         setDocuments(docs);
         if (docs.length > 0 && !selectedDocId) {
-          setSelectedDocId(docs[0]._id);
+          const firstId = docs[0]._id || docs[0].id;
+          setSelectedDocId(firstId);
         }
       } catch (err) {
         console.error('Failed to load documents list:', err);
@@ -75,7 +75,6 @@ const AIChatPage = () => {
     setQuestion('');
     setSending(true);
 
-    // Optimistic UI update
     setMessages(prev => [
       ...prev,
       { role: 'user', content: qText, timestamp: new Date().toISOString() }
@@ -83,7 +82,7 @@ const AIChatPage = () => {
 
     try {
       const res = await api.post(`/chat/${selectedDocId}`, { question: qText });
-      setMessages(res.data.data.messages);
+      setMessages(res.data.data.messages || []);
     } catch (err) {
       toast.error('AI model failed to generate response');
     } finally {
@@ -120,23 +119,26 @@ const AIChatPage = () => {
 
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           {documents.length > 0 ? (
-            documents.map((doc) => (
-              <button
-                key={doc._id}
-                onClick={() => setSelectedDocId(doc._id)}
-                className={`w-full text-left p-3 rounded-xl border text-xs transition-all ${
-                  selectedDocId === doc._id
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                    : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
-                }`}
-              >
-                <p className="font-bold truncate">{doc.originalName}</p>
-                <div className="flex justify-between items-center mt-1 text-[10px] opacity-80">
-                  <span>{doc.fileCategory}</span>
-                  <span>{(doc.size / 1024).toFixed(0)} KB</span>
-                </div>
-              </button>
-            ))
+            documents.map((doc) => {
+              const dId = doc._id || doc.id;
+              return (
+                <button
+                  key={dId}
+                  onClick={() => setSelectedDocId(dId)}
+                  className={`w-full text-left p-3 rounded-xl border text-xs transition-all ${
+                    selectedDocId === dId
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                      : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
+                  }`}
+                >
+                  <p className="font-bold truncate">{doc.originalName}</p>
+                  <div className="flex justify-between items-center mt-1 text-[10px] opacity-80">
+                    <span>{doc.fileCategory}</span>
+                    <span>{(doc.size / 1024).toFixed(0)} KB</span>
+                  </div>
+                </button>
+              );
+            })
           ) : (
             <p className="text-xs italic text-slate-400 p-2">No uploaded documents available.</p>
           )}

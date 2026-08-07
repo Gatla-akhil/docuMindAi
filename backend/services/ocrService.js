@@ -15,27 +15,42 @@ const preprocessImage = async (filePath) => {
       .toBuffer();
     return processedBuffer;
   } catch (err) {
-    console.warn(`[OCR Preprocess Warning]: Could not preprocess image with Sharp, falling back to original file. ${err.message}`);
-    return fs.readFileSync(filePath);
+    console.warn(`[OCR Preprocess Warning]: Could not preprocess with Sharp (${err.message}). Using raw file buffer.`);
+    try {
+      return fs.readFileSync(filePath);
+    } catch (e) {
+      return null;
+    }
   }
 };
 
 /**
- * Perform OCR on image file
+ * Perform OCR on image file safely without crashing node process
  */
 const performOCR = async (filePath) => {
   let worker = null;
   try {
+    // Tesseract.js handles image files (PNG, JPG, TIFF, WEBP).
+    // If passed a raw PDF, skip Tesseract to avoid pixReadStream crash
+    if (filePath.toLowerCase().endsWith('.pdf')) {
+      console.warn('[OCR Notice]: Direct PDF binary is not a bitmap image format for Tesseract. Skipping OCR fallback.');
+      return '';
+    }
+
     const buffer = await preprocessImage(filePath);
+    if (!buffer) return '';
+
     worker = await createWorker('eng');
     const { data: { text } } = await worker.recognize(buffer);
     await worker.terminate();
     return text || '';
   } catch (error) {
     if (worker) {
-      await worker.terminate().catch(() => {});
+      try {
+        await worker.terminate();
+      } catch (e) {}
     }
-    console.error(`[OCR Error]: ${error.message}`);
+    console.error(`[OCR Safe Catch]: Tesseract OCR skipped (${error.message || error})`);
     return '';
   }
 };

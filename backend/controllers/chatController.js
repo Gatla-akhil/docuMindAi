@@ -1,50 +1,55 @@
 const Document = require('../models/Document');
 const ChatHistory = require('../models/ChatHistory');
+const { getIsConnected } = require('../config/db');
+const { memoryDb, generateId } = require('../utils/memoryStore');
 const { answerDocumentQuestion } = require('../services/geminiService');
 const { sendSuccess, sendError } = require('../utils/response');
 
-/**
- * @desc    Ask a question about an uploaded document
- * @route   POST /api/chat/:documentId
- * @access  Private
- */
 const askQuestion = async (req, res, next) => {
   try {
+    const userId = String(req.user._id || req.user.id);
     const { documentId } = req.params;
     const { question } = req.body;
 
-    const doc = await Document.findOne({ _id: documentId, user: req.user._id });
+    let doc;
+    if (getIsConnected()) {
+      try {
+        doc = await Document.findOne({ _id: documentId, user: userId });
+      } catch (e) {}
+    }
+    if (!doc) {
+      doc = memoryDb.documents.find(d => String(d._id) === String(documentId) && String(d.user) === userId);
+    }
+
     if (!doc) {
       return sendError(res, 'Document not found or access denied', 404);
     }
 
-    let chat = await ChatHistory.findOne({ document: documentId, user: req.user._id });
-    if (!chat) {
-      chat = await ChatHistory.create({
-        document: documentId,
-        user: req.user._id,
-        messages: []
-      });
+    let chat;
+    if (getIsConnected()) {
+      try {
+        chat = await ChatHistory.findOne({ document: documentId, user: userId });
+        if (!chat) {
+          chat = await ChatHistory.create({ document: documentId, user: userId, messages: [] });
+        }
+      } catch (e) {}
     }
 
-    // Add user question to chat history
-    chat.messages.push({
-      role: 'user',
-      content: question,
-      timestamp: new Date()
-    });
+    if (!chat) {
+      chat = memoryDb.chatHistories.find(c => String(c.document) === String(documentId) && String(c.user) === userId);
+      if (!chat) {
+        chat = { _id: generateId('chat'), document: documentId, user: userId, messages: [] };
+        memoryDb.chatHistories.push(chat);
+      }
+    }
 
-    // Get AI answer from Gemini
-    const answer = await answerDocumentQuestion(doc.textExtracted, question, chat.messages);
+    chat.messages.push({ role: 'user', content: question, timestamp: new Date() });
 
-    // Add AI answer to chat history
-    chat.messages.push({
-      role: 'assistant',
-      content: answer,
-      timestamp: new Date()
-    });
+    const answer = await answerDocumentQuestion(doc.textExtracted || '', question, chat.messages);
 
-    await chat.save();
+    chat.messages.push({ role: 'assistant', content: answer, timestamp: new Date() });
+
+    if (chat.save) await chat.save();
 
     return sendSuccess(res, 'Answer generated successfully', {
       question,
@@ -57,15 +62,20 @@ const askQuestion = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get chat history for a document
- * @route   GET /api/chat/:documentId
- * @access  Private
- */
 const getChatHistory = async (req, res, next) => {
   try {
+    const userId = String(req.user._id || req.user.id);
     const { documentId } = req.params;
-    const chat = await ChatHistory.findOne({ document: documentId, user: req.user._id });
+
+    let chat;
+    if (getIsConnected()) {
+      try {
+        chat = await ChatHistory.findOne({ document: documentId, user: userId });
+      } catch (e) {}
+    }
+    if (!chat) {
+      chat = memoryDb.chatHistories.find(c => String(c.document) === String(documentId) && String(c.user) === userId);
+    }
 
     return sendSuccess(res, 'Chat history retrieved', {
       messages: chat ? chat.messages : []
@@ -75,19 +85,24 @@ const getChatHistory = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Clear chat history for a document
- * @route   DELETE /api/chat/:documentId
- * @access  Private
- */
 const clearChatHistory = async (req, res, next) => {
   try {
+    const userId = String(req.user._id || req.user.id);
     const { documentId } = req.params;
-    const chat = await ChatHistory.findOne({ document: documentId, user: req.user._id });
 
+    if (getIsConnected()) {
+      try {
+        const chat = await ChatHistory.findOne({ document: documentId, user: userId });
+        if (chat) {
+          chat.messages = [];
+          await chat.save();
+        }
+      } catch (e) {}
+    }
+
+    const chat = memoryDb.chatHistories.find(c => String(c.document) === String(documentId) && String(c.user) === userId);
     if (chat) {
       chat.messages = [];
-      await chat.save();
     }
 
     return sendSuccess(res, 'Chat history cleared');

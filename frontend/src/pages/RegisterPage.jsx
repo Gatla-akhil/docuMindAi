@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../context/AuthContext';
-import { FileText, User, Mail, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
+import { FileText, User, Mail, Lock, ArrowRight } from 'lucide-react';
 
 const RegisterPage = () => {
   const { register: registerAuth } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,27 +59,35 @@ const RegisterPage = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl gradient-bg mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <FileText className="w-6 h-6 text-white" />
+        {/* Header & Language Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center shadow-md">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-wide">IDP PLATFORM</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Create Your Account</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Join the Intelligent Document Processing AI Platform
+          <LanguageSelector />
+        </div>
+
+        <div className="text-center space-y-1">
+          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t.registerTitle}</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t.registerSubtitle}
           </p>
         </div>
 
-        <div className="glass-panel p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl">
+        <div className="glass-panel p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Full Name
+                {t.fullNameLabel}
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t.fullNamePlaceholder}
                   {...register('name', { required: 'Name is required', minLength: { value: 2, message: 'Minimum 2 characters' } })}
                   className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:outline-none"
                 />
@@ -86,13 +97,13 @@ const RegisterPage = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Email Address
+                {t.emailLabel}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
-                  placeholder="name@company.com"
+                  placeholder={t.emailPlaceholder}
                   {...register('email', {
                     required: 'Email is required',
                     pattern: { value: /^\S+@\S+$/i, message: 'Invalid email address' }
@@ -105,13 +116,13 @@ const RegisterPage = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Password
+                {t.passwordLabel}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder={t.passwordPlaceholder}
                   {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Minimum 6 characters' } })}
                   className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:outline-none"
                 />
@@ -133,14 +144,14 @@ const RegisterPage = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Account Type
+                {t.roleLabel}
               </label>
               <select
                 {...register('role')}
                 className="w-full px-3 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:border-indigo-500 focus:outline-none"
               >
-                <option value="user">Standard User</option>
-                <option value="admin">System Administrator</option>
+                <option value="user">{t.roleUser}</option>
+                <option value="admin">{t.roleAdmin}</option>
               </select>
             </div>
 
@@ -149,15 +160,15 @@ const RegisterPage = () => {
               disabled={submitting}
               className="w-full py-3 px-4 rounded-xl text-sm font-bold text-white gradient-bg hover:opacity-95 transition-opacity shadow-lg shadow-indigo-500/20 flex items-center justify-center space-x-2 disabled:opacity-50"
             >
-              <span>{submitting ? 'Creating Account...' : 'Register Account'}</span>
+              <span>{submitting ? '...' : t.signUpBtn}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-            Already have an account?{' '}
+          <div className="text-center text-xs text-slate-500 dark:text-slate-400">
+            {t.alreadyHaveAccount}{' '}
             <Link to="/login" className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-              Log In
+              {t.signInLink}
             </Link>
           </div>
         </div>

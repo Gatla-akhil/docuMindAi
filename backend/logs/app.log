@@ -1,0 +1,60 @@
+[ERROR] [2026-08-06T13:37:46.534Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:38:04.161Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:38:18.058Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:38:41.508Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:41:25.079Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:42:09.774Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:43:13.503Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:50:44.828Z] Operation `users.findOne()` buffering timed out after 10000ms - MongooseError: Operation `users.findOne()` buffering timed out after 10000ms
+    at Timeout.<anonymous> (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\mongoose\lib\drivers\node-mongodb-native\collection.js:187:23)
+    at listOnTimeout (node:internal/timers:605:17)
+    at process.processTimers (node:internal/timers:541:7)
+[ERROR] [2026-08-06T13:54:00.957Z] Expected property name or '}' in JSON at position 1 (line 1 column 2) - SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at parse (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\body-parser\lib\types\json.js:96:19)
+    at C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\body-parser\lib\read.js:128:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:228:14)
+    at invokeCallback (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\raw-body\index.js:238:16)
+    at done (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:508:28)
+    at endReadableNT (node:internal/streams/readable:1729:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+[ERROR] [2026-08-06T14:23:54.995Z] Cannot read properties of undefined (reading '_id') - TypeError: Cannot read properties of undefined (reading '_id')
+    at downloadDocumentReport (C:\Users\GATLA AKHIL\New folder (17)\backend\controllers\documentController.js:222:36)
+    at Layer.handle [as handle_request] (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:284:15
+    at param (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:365:14)
+    at param (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:376:14)
+    at router.process_params (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:421:3)
+    at next (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:280:10)
+    at router.handle (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:286:9
+    at router.process_params (C:\Users\GATLA AKHIL\New folder (17)\backend\node_modules\express\lib\router\index.js:346:12)

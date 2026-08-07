@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import { CardSkeleton } from '../components/LoadingSkeleton';
 import {
   FileText,
@@ -10,14 +11,11 @@ import {
   UploadCloud,
   ArrowUpRight,
   TrendingUp,
-  Activity,
-  FileCheck
+  Activity
 } from 'lucide-react';
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -31,6 +29,7 @@ import {
 const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
 
 const DashboardPage = () => {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,7 +71,7 @@ const DashboardPage = () => {
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Analytics & Overview</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.navDashboard}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Real-time telemetry on document ingestion, OCR execution, and AI parsing.
           </p>
@@ -82,7 +81,7 @@ const DashboardPage = () => {
           className="px-5 py-2.5 rounded-xl text-sm font-bold text-white gradient-bg shadow-lg hover:opacity-95 transition-opacity flex items-center space-x-2 w-fit"
         >
           <UploadCloud className="w-4 h-4" />
-          <span>Upload New File</span>
+          <span>{t.quickUploadBtn}</span>
         </Link>
       </div>
 
@@ -90,28 +89,28 @@ const DashboardPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
-            title: 'Total Documents',
+            title: t.totalDocsCard,
             value: cards.totalDocuments,
             sub: 'Processed across all formats',
             icon: FileText,
             color: 'text-indigo-500 bg-indigo-500/10'
           },
           {
-            title: 'Storage Occupied',
+            title: t.storageCard,
             value: `${cards.totalStorageMB} MB`,
             sub: 'Sanitized storage allocation',
             icon: HardDrive,
             color: 'text-purple-500 bg-purple-500/10'
           },
           {
-            title: 'OCR Executions',
+            title: t.ocrCountCard,
             value: cards.ocrProcessed,
             sub: 'Tesseract vision applied',
             icon: Scan,
             color: 'text-emerald-500 bg-emerald-500/10'
           },
           {
-            title: 'Pipeline Success',
+            title: t.completionRateCard,
             value: `${cards.completedRate}%`,
             sub: 'No error rate',
             icon: CheckCircle,
@@ -198,7 +197,7 @@ const DashboardPage = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center space-x-2">
             <Activity className="w-5 h-5 text-indigo-500" />
-            <span>Recent System Activity Log</span>
+            <span>{t.recentActivity}</span>
           </h3>
           <Link to="/history" className="text-xs font-semibold text-indigo-500 hover:underline flex items-center gap-1">
             View All Documents <ArrowUpRight className="w-3.5 h-3.5" />

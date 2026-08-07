@@ -1,66 +1,56 @@
 const Document = require('../models/Document');
+const { getIsConnected } = require('../config/db');
+const { memoryDb } = require('../utils/memoryStore');
 const { sendSuccess } = require('../utils/response');
 
-/**
- * @desc    Global multi-criteria document search
- * @route   GET /api/search
- * @access  Private
- */
 const searchDocuments = async (req, res, next) => {
   try {
+    const userId = String(req.user._id || req.user.id);
     const { q, category, mimeType, startDate, endDate } = req.query;
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
 
-    const filter = { user: req.user._id };
+    let documents = [];
 
+    if (getIsConnected()) {
+      try {
+        const filter = { user: userId };
+        if (q) {
+          const regex = new RegExp(q, 'i');
+          filter.$or = [
+            { originalName: regex },
+            { summary: regex },
+            { textExtracted: regex },
+            { keywords: regex }
+          ];
+        }
+        if (category) filter.fileCategory = category;
+
+        documents = await Document.find(filter).sort({ createdAt: -1 });
+      } catch (e) {
+        documents = memoryDb.documents.filter(d => String(d.user) === userId);
+      }
+    } else {
+      documents = memoryDb.documents.filter(d => String(d.user) === userId);
+    }
+
+    // Filter in-memory if needed
     if (q) {
-      const regex = new RegExp(q, 'i');
-      filter.$or = [
-        { originalName: regex },
-        { summary: regex },
-        { keywords: regex },
-        { textExtracted: regex },
-        { 'extractedEntities.names': regex },
-        { 'extractedEntities.emails': regex },
-        { 'extractedEntities.phoneNumbers': regex },
-        { 'extractedEntities.invoiceNumbers': regex },
-        { 'extractedEntities.panNumbers': regex },
-        { 'extractedEntities.gstNumbers': regex }
-      ];
+      const lower = q.toLowerCase();
+      documents = documents.filter(d =>
+        d.originalName?.toLowerCase().includes(lower) ||
+        d.summary?.toLowerCase().includes(lower) ||
+        d.textExtracted?.toLowerCase().includes(lower) ||
+        JSON.stringify(d.extractedEntities || {}).toLowerCase().includes(lower)
+      );
     }
 
     if (category) {
-      filter.fileCategory = category;
+      documents = documents.filter(d => d.fileCategory === category);
     }
-
-    if (mimeType) {
-      filter.mimeType = new RegExp(mimeType, 'i');
-    }
-
-    if (startDate || endDate) {
-      filter.createdAt = {};
-      if (startDate) filter.createdAt.$gte = new Date(startDate);
-      if (endDate) filter.createdAt.$lte = new Date(endDate);
-    }
-
-    const documents = await Document.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Document.countDocuments(filter);
 
     return sendSuccess(res, 'Search results retrieved', {
       query: { q, category, mimeType, startDate, endDate },
       documents,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      pagination: { page: 1, limit: 100, total: documents.length, pages: 1 }
     });
   } catch (error) {
     next(error);

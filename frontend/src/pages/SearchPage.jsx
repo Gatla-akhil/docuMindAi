@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Search, Filter, FileText, Calendar, ArrowUpRight, Download, Scan } from 'lucide-react';
+import { Search, FileText, ArrowUpRight, Scan } from 'lucide-react';
 import { TableRowSkeleton } from '../components/LoadingSkeleton';
 
 const SearchPage = () => {
@@ -30,8 +30,8 @@ const SearchPage = () => {
       setSearchParams(params);
 
       const res = await api.get(`/search?${params.toString()}`);
-      setResults(res.data.data.documents);
-      setTotal(res.data.data.pagination.total);
+      setResults(res.data.data.documents || []);
+      setTotal(res.data.data.pagination?.total || 0);
     } catch (err) {
       console.error('Search failed:', err);
     } finally {
@@ -164,40 +164,43 @@ const SearchPage = () => {
                   <TableRowSkeleton />
                 </>
               ) : results.length > 0 ? (
-                results.map((doc) => (
-                  <tr key={doc._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <span className="truncate max-w-xs">{doc.originalName}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-semibold">
-                        {doc.fileCategory}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {doc.ocrApplied ? (
-                        <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                          <Scan className="w-3 h-3" /> OCR Applied
+                results.map((doc) => {
+                  const docId = doc._id || doc.id;
+                  return (
+                    <tr key={docId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <span className="truncate max-w-xs">{doc.originalName}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-semibold">
+                          {doc.fileCategory}
                         </span>
-                      ) : (
-                        <span className="text-slate-400">Native Parse</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-slate-400">
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="p-4 text-right">
-                      <Link
-                        to={`/documents/${doc._id}`}
-                        className="p-2 text-indigo-500 hover:text-indigo-600 inline-flex items-center space-x-1"
-                      >
-                        <span>View</span>
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="p-4">
+                        {doc.ocrApplied ? (
+                          <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                            <Scan className="w-3 h-3" /> OCR Applied
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Native Parse</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-slate-400">
+                        {new Date(doc.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-right">
+                        <Link
+                          to={`/documents/${docId}`}
+                          className="p-2 text-indigo-500 hover:text-indigo-600 inline-flex items-center space-x-1"
+                        >
+                          <span>View</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400 italic">

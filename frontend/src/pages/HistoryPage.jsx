@@ -32,8 +32,8 @@ const HistoryPage = () => {
       if (category) url += `&category=${category}`;
 
       const res = await api.get(url);
-      setDocuments(res.data.data.documents);
-      setTotalPages(res.data.data.pagination.pages || 1);
+      setDocuments(res.data.data.documents || []);
+      setTotalPages(res.data.data.pagination?.pages || 1);
     } catch (err) {
       console.error('Failed to load history:', err);
     } finally {
@@ -47,8 +47,9 @@ const HistoryPage = () => {
 
   const handleDeleteConfirm = async () => {
     if (!deleteDoc) return;
+    const docId = deleteDoc._id || deleteDoc.id;
     try {
-      await api.delete(`/documents/${deleteDoc._id}`);
+      await api.delete(`/documents/${docId}`);
       toast.success('Document deleted.');
       fetchHistory();
     } catch (err) {
@@ -109,68 +110,73 @@ const HistoryPage = () => {
                   <TableRowSkeleton />
                 </>
               ) : documents.length > 0 ? (
-                documents.map((doc) => (
-                  <tr key={doc._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <span className="truncate max-w-xs">{doc.originalName}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-semibold">
-                        {doc.fileCategory}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-400">
-                      {(doc.size / 1024).toFixed(1)} KB
-                    </td>
-                    <td className="p-4">
-                      {doc.ocrApplied ? (
-                        <span className="text-emerald-500 font-semibold flex items-center gap-1">
-                          <Scan className="w-3 h-3" /> OCR
+                documents.map((doc) => {
+                  const docId = doc._id || doc.id;
+                  return (
+                    <tr key={docId} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <span className="truncate max-w-xs">{doc.originalName}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 font-semibold">
+                          {doc.fileCategory}
                         </span>
-                      ) : (
-                        <span className="text-slate-400">Standard</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-slate-400">
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="p-4 text-right space-x-2">
-                      <Link
-                        to={`/documents/${doc._id}`}
-                        className="p-1.5 text-indigo-500 hover:text-indigo-600 inline-block"
-                        title="View Details"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
+                      </td>
+                      <td className="p-4 text-slate-400">
+                        {(doc.size / 1024).toFixed(1)} KB
+                      </td>
+                      <td className="p-4">
+                        {doc.ocrApplied ? (
+                          <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                            <Scan className="w-3 h-3" /> OCR
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">Standard</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-slate-400">
+                        {new Date(doc.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-right space-x-2">
+                        <Link
+                          to={`/documents/${docId}`}
+                          className="p-1.5 text-indigo-500 hover:text-indigo-600 inline-block"
+                          title="View Details"
+                        >
+                          <ArrowUpRight className="w-4 h-4" />
+                        </Link>
 
-                      <Link
-                        to={`/chat?doc=${doc._id}`}
-                        className="p-1.5 text-purple-500 hover:text-purple-600 inline-block"
-                        title="Launch AI Chat"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </Link>
+                        <Link
+                          to={`/chat?doc=${docId}`}
+                          className="p-1.5 text-purple-500 hover:text-purple-600 inline-block"
+                          title="Launch AI Chat"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </Link>
 
-                      <a
-                        href={`/api/documents/${doc._id}/download?format=json`}
-                        download
-                        className="p-1.5 text-slate-400 hover:text-slate-200 inline-block"
-                        title="Download JSON"
-                      >
-                        <Download className="w-4 h-4" />
-                      </a>
+                        <a
+                          href={`/api/documents/${docId}/download?format=json`}
+                          target="_blank"
+                          rel="noreferrer"
+                          download={`${doc.originalName}-analysis.json`}
+                          className="p-1.5 text-slate-400 hover:text-slate-200 inline-block"
+                          title="Download JSON"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
 
-                      <button
-                        onClick={() => setDeleteDoc(doc)}
-                        className="p-1.5 text-red-500 hover:text-red-600 inline-block"
-                        title="Delete Document"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                        <button
+                          onClick={() => setDeleteDoc(doc)}
+                          className="p-1.5 text-red-500 hover:text-red-600 inline-block"
+                          title="Delete Document"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400 italic">

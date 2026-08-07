@@ -9,12 +9,16 @@ const api = axios.create({
   }
 });
 
-// Request Interceptor: Attach Access Token
+// Request Interceptor: Attach Access Token & Fix FormData Headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Allow Axios to set browser boundary for FormData file uploads automatically
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },

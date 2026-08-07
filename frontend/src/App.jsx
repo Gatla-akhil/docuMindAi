@@ -47,6 +47,11 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   return children;
 };
 
+import VideoCallPage from './pages/VideoCallPage';
+import PerformancePage from './pages/PerformancePage';
+import SportsPage from './pages/SportsPage';
+import FinancePage from './pages/FinancePage';
+
 // Main App Layout
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,6 +72,10 @@ const AppLayout = () => {
             {/* Protected Application Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
+            <Route path="/videocall" element={<ProtectedRoute><VideoCallPage /></ProtectedRoute>} />
+            <Route path="/performance" element={<ProtectedRoute><PerformancePage /></ProtectedRoute>} />
+            <Route path="/sports" element={<ProtectedRoute><SportsPage /></ProtectedRoute>} />
+            <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
             <Route path="/documents/:id" element={<ProtectedRoute><DocumentDetailsPage /></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><AIChatPage /></ProtectedRoute>} />
             <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />

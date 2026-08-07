@@ -10,6 +10,8 @@
     "build": "npm run build --prefix frontend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "eslint": "^10.8.0",
+    "vite": "^8.2.1"
   }
 }

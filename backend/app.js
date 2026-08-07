@@ -59,8 +59,10 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
-// Static uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const { protect } = require('./middlewares/authMiddleware');
+
+// Static uploads directory (Protected: requires valid authorization bearer token or query token)
+app.use('/uploads', protect, express.static(path.join(__dirname, 'uploads')));
 
 // Health Check API
 app.get('/api/health', (req, res) => {

@@ -19,28 +19,36 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedMimeTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-    'image/tiff'
+  const allowedExtensions = [
+    '.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.webp', '.tiff', '.txt',
+    // Video Meeting Formats
+    '.mp4', '.webm', '.avi', '.mov', '.mkv',
+    // Audio & Phone Call Recording Formats
+    '.mp3', '.wav', '.m4a', '.ogg', '.aac', '.amr', '.3gp', '.flac'
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const dangerousExtensions = [
+    '.exe', '.php', '.sh', '.bat', '.cmd', '.ps1', '.vbs', '.js', '.jar', '.py',
+    '.pl', '.html', '.htm', '.xhtml', '.asp', '.aspx', '.jsp', '.cgi', '.dll'
+  ];
+
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (dangerousExtensions.includes(ext)) {
+    return cb(new Error(`Security Restriction: Executable file types (${ext}) are prohibited.`), false);
+  }
+
+  if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type (${file.mimetype}). Allowed types: PDF, DOCX, PNG, JPG, WEBP, TIFF`), false);
+    cb(new Error(`Invalid file type (${file.originalname}). Supported formats: PDF, DOCX, PNG, JPG, MP4, MP3, M4A, AMR, 3GP, WAV, AAC`), false);
   }
 };
 
 const upload = multer({
   storage,
   limits: {
-    fileSize: 25 * 1024 * 1024 // 25MB Max
+    fileSize: 100 * 1024 * 1024 // 100MB Max
   },
   fileFilter
 });

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import LanguageSelector from './LanguageSelector';
 import {
   FileText,
   Sun,
@@ -11,8 +12,7 @@ import {
   LogOut,
   Shield,
   Upload,
-  Menu,
-  X
+  Menu
 } from 'lucide-react';
 
 const Navbar = ({ onToggleSidebar }) => {
@@ -71,8 +71,10 @@ const Navbar = ({ onToggleSidebar }) => {
             </form>
           )}
 
-          {/* Actions & User Menu */}
+          {/* Actions & Language & User Menu */}
           <div className="flex items-center space-x-3">
+            <LanguageSelector />
+
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
