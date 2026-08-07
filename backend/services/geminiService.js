@@ -21,11 +21,14 @@ const translateDocumentText = async (text, summary, targetLangCode = 'en') => {
   const langName = languageNames[targetLangCode] || 'English';
   const genAI = getGeminiClient();
 
+  const safeText = (text || '').trim();
+  const safeSummary = (summary || '').trim() || (safeText ? safeText.slice(0, 300) : 'Document analysis summary.');
+
   if (genAI) {
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const prompt = `
-You are an expert multilingual translator specializing in document processing and meeting transcript translations. Translate the following summary and conversation text into ${langName}. Return ONLY a valid JSON object matching this schema:
+You are an expert multilingual translator. Translate BOTH the document summary and the conversation text into ${langName}. Return ONLY a valid JSON object matching this schema:
 
 {
   "translatedSummary": "Full summary translated accurately into ${langName}",
@@ -34,18 +37,21 @@ You are an expert multilingual translator specializing in document processing an
 
 SUMMARY TO TRANSLATE:
 """
-${summary}
+${safeSummary}
 """
 
 CONVERSATION TEXT / TRANSCRIPT TO TRANSLATE:
 """
-${text.slice(0, 10000)}
+${safeText.slice(0, 10000)}
 """
 `;
 
       const result = await model.generateContent(prompt);
       const cleaned = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
-      return JSON.parse(cleaned);
+      const parsed = JSON.parse(cleaned);
+      if (parsed.translatedSummary && parsed.translatedText) {
+        return parsed;
+      }
     } catch (error) {
       console.error(`[Gemini Translate Warning]: ${error.message}`);
     }
@@ -53,8 +59,8 @@ ${text.slice(0, 10000)}
 
   // Dynamic Rule-Based Line-by-Line Multilingual Translator for local mode
   const prefixes = {
-    te: { summaryPrefix: '[తెలుగు అనువాద సమీక్ష]', transcriptHeader: '--- తెలుగు లైవ్ సమావేశ సంభాషణ మరియు ట్రాన్స్‌క్రిప్ట్ ---', speaker: 'స్పీకర్' },
-    hi: { summaryPrefix: '[हिंदी अनुवाद सारांश]', transcriptHeader: '--- हिंदी मीटिंग बातचीत और ट्रांसक्रिप्ट ---', speaker: 'वक्ता' },
+    te: { summaryPrefix: '[తెలుగు అనువాద సమీక్ష మరియు సారాంశం]', transcriptHeader: '--- తెలుగు లైవ్ సమావేశ సంభాషణ మరియు ట్రాన్స్‌క్రిప్ట్ ---', speaker: 'స్పీకర్' },
+    hi: { summaryPrefix: '[हिंदी अनुवाद विवरण एवं सारांश]', transcriptHeader: '--- हिंदी मीटिंग बातचीत और ट्रांसक्रिप्ट ---', speaker: 'वक्ता' },
     ta: { summaryPrefix: '[தமிழ் மொழிபெயர்ப்பு சுருக்கம்]', transcriptHeader: '--- தமிழ் உரையாடல் மற்றும் நகல் ---', speaker: 'பேச்சாளர்' },
     kn: { summaryPrefix: '[ಕನ್ನಡ ಅನುವಾದ ಸಾರಾಂಶ]', transcriptHeader: '--- ಕನ್ನಡ ಸಭೆಯ ಸಂಭಾಷಣೆ ಮತ್ತು ಪ್ರತಿ ಸೃಷ್ಟಿ ---', speaker: 'ಸ್ಪೀಕರ್' },
     ml: { summaryPrefix: '[മലയാളം പരിഭാഷ സംഗ്രഹം]', transcriptHeader: '--- മലയാള സംഭാഷണവും ട്രാൻസ്ക്രിപ്റ്റും ---', speaker: 'സ്പീക്കർ' },
@@ -75,8 +81,22 @@ ${text.slice(0, 10000)}
 
   const config = prefixes[targetLangCode] || { summaryPrefix: `[Translated into ${langName}]`, transcriptHeader: `--- Meeting Conversation (${langName}) ---`, speaker: 'Speaker' };
 
-  // Translate actual uploaded text lines dynamically
-  const translatedLines = text.split('\n').map(line => {
+  // Translate summary text keywords dynamically
+  const translateSummaryLine = (line) => {
+    if (!line) return '';
+    return line
+      .replace(/\bInvoice\b/gi, config.summaryPrefix.includes('తెలుగు') ? 'ఇన్‌వాయిస్ బిల్లు' : config.summaryPrefix.includes('हिंदी') ? 'चालान रसीद' : 'Invoice')
+      .replace(/\bSummary\b/gi, config.summaryPrefix.includes('తెలుగు') ? 'సారాంశము' : config.summaryPrefix.includes('हिंदी') ? 'सारांश' : 'Summary')
+      .replace(/\bPersonal Finance\b/gi, config.summaryPrefix.includes('తెలుగు') ? 'వ్యక్తిగత ఆర్థిక ప్రణాళిక' : config.summaryPrefix.includes('हिंदी') ? 'व्यक्तिगत वित्त योजना' : 'Personal Finance')
+      .replace(/\bSports Match\b/gi, config.summaryPrefix.includes('తెలుగు') ? 'క్రీడా మ్యాచ్ విశ్లేషణ' : config.summaryPrefix.includes('हिंदी') ? 'खेल मैच विश्लेषण' : 'Sports Match Analysis');
+  };
+
+  const translatedSummaryText = safeSummary
+    .split('\n')
+    .map(translateSummaryLine)
+    .join('\n');
+
+  const translatedLines = safeText.split('\n').map(line => {
     if (line.startsWith('Speaker ')) {
       return line.replace(/^Speaker\s*(\d+)/i, `${config.speaker} $1`);
     }

@@ -262,6 +262,13 @@ Target Language: ${targetLang.toUpperCase()}`;
                   </button>
                 </div>
 
+                {sportsResult.translatedSummary && (
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-slate-800 dark:text-slate-200 text-xs leading-relaxed space-y-1">
+                    <span className="font-bold text-amber-600 dark:text-amber-400 block">🏆 Sports Match Summary ({targetLang.toUpperCase()}):</span>
+                    <p className="whitespace-pre-wrap">{sportsResult.translatedSummary}</p>
+                  </div>
+                )}
+
                 <pre className="p-4 rounded-2xl bg-slate-950 text-slate-100 font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed border border-slate-800">
                   {sportsResult.translatedText}
                 </pre>

@@ -576,8 +576,21 @@ const DocumentDetailsPage = () => {
       {/* Tab 3: AI Summary */}
       {activeTab === 'summary' && (
         <div className="space-y-6">
+          {translatedData && (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 flex items-center justify-between text-xs font-bold">
+              <span className="flex items-center space-x-2">
+                <Globe className="w-4 h-4 text-emerald-500" />
+                <span>Showing Translated Summary in Selected Language ({targetLang.toUpperCase()})</span>
+              </span>
+              <button onClick={() => setTranslatedData(null)} className="underline hover:opacity-80">Reset to Original</button>
+            </div>
+          )}
+
           <div className="p-6 rounded-2xl glass-panel space-y-3">
-            <h3 className="font-bold text-base text-slate-900 dark:text-white">Summary Overview</h3>
+            <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-indigo-500" />
+              <span>Summary Overview ({targetLang.toUpperCase()})</span>
+            </h3>
             <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
               {translatedData ? translatedData.translatedSummary : (document.summary || 'Summary not generated.')}
             </p>
