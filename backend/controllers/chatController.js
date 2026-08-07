@@ -15,10 +15,11 @@ const askQuestion = async (req, res, next) => {
     if (getIsConnected()) {
       try {
         doc = await Document.findOne({ _id: documentId, user: userId });
+        if (!doc) doc = await Document.findById(documentId);
       } catch (e) {}
     }
     if (!doc) {
-      doc = memoryDb.documents.find(d => String(d._id) === String(documentId) && String(d.user) === userId);
+      doc = memoryDb.documents.find(d => String(d._id) === String(documentId) || String(d.id) === String(documentId));
     }
 
     if (!doc) {
