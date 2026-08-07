@@ -106,6 +106,9 @@ app.post('/api/process-document', upload.single('file'), uploadDocument);
 app.post('/api/upload', upload.single('file'), uploadDocument);
 app.post('/api/convert', upload.single('file'), uploadDocument);
 
+const audioRoutes = require('./routes/audioRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+
 // API Routes Mount
 app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
@@ -113,6 +116,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/audio', audioRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Error Middlewares
 app.use(notFound);
