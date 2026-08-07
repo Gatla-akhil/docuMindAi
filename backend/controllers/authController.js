@@ -37,9 +37,19 @@ const normalizeUser = (u) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
-    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    if (!name || !email || !password) {
+      return sendError(res, 'Please provide name, email, and password', 400);
+    }
+
+    if (password.length < 6) {
+      return sendError(res, 'Password must be at least 6 characters long', 400);
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+
     let existingUser = null;
 
     if (getIsConnected()) {
@@ -56,40 +66,38 @@ const register = async (req, res, next) => {
     }
 
     if (existingUser) {
-      return sendError(res, 'User with this email already exists', 400);
+      return sendError(res, 'User with this email already exists. Please log in instead.', 400);
     }
 
-    const userId = generateId('usr');
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    let createdMongoUser = null;
+    if (getIsConnected()) {
+      try {
+        createdMongoUser = await User.create({
+          name: cleanName,
+          email: cleanEmail,
+          password: password, // Raw password so pre('save') hook single-hashes it
+          role: 'user'
+        });
+      } catch (dbErr) {
+        console.warn(`[DB Register Notice]: ${dbErr.message}`);
+      }
+    }
+
+    const userId = createdMongoUser ? String(createdMongoUser._id) : generateId('usr');
+
     const memUserObj = {
       _id: userId,
       id: userId,
-      name,
+      name: cleanName,
       email: cleanEmail,
       password: hashedPassword,
-      role: 'user', // Enforce standard 'user' role on self-registration
+      role: 'user',
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    let user = memUserObj;
-    if (getIsConnected()) {
-      try {
-        // Pass unhashed password so UserSchema pre('save') hook hashes it ONCE
-        const created = await User.create({
-          _id: userId,
-          name,
-          email: cleanEmail,
-          password: password,
-          role: 'user'
-        });
-        user = normalizeUser(created);
-      } catch (dbErr) {
-        console.warn(`[DB Register Fallback]: ${dbErr.message}`);
-      }
-    }
-
-    // Always keep memoryDb synced as a resilient fallback
     const existingIndex = memoryDb.users.findIndex(u => u.email.toLowerCase() === cleanEmail);
     if (existingIndex !== -1) {
       memoryDb.users[existingIndex] = memUserObj;
@@ -97,12 +105,11 @@ const register = async (req, res, next) => {
       memoryDb.users.push(memUserObj);
     }
 
-    // Write to Supabase table if enabled
     if (getIsSupabaseConnected()) {
       try {
         await supabase.from('users').insert({
           id: userId,
-          name,
+          name: cleanName,
           email: cleanEmail,
           role: 'user',
           created_at: new Date()
@@ -112,16 +119,17 @@ const register = async (req, res, next) => {
       }
     }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const finalUser = createdMongoUser ? normalizeUser(createdMongoUser) : normalizeUser(memUserObj);
+    const accessToken = generateAccessToken(finalUser);
+    const refreshTokenToken = generateRefreshToken(finalUser);
 
     return res.status(201).json({
       success: true,
       message: 'Registration Successful',
       token: accessToken,
       accessToken,
-      refreshToken,
-      user: normalizeUser(user)
+      refreshToken: refreshTokenToken,
+      user: finalUser
     });
   } catch (error) {
     next(error);
