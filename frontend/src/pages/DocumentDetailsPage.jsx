@@ -192,7 +192,7 @@ const DocumentDetailsPage = () => {
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Uploaded on {new Date(document.createdAt).toLocaleString()} • {(document.size / (1024 * 1024)).toFixed(1)} MB
+                Uploaded on {new Date(document.createdAt).toLocaleString()} • {document.size < 1024 * 1024 ? `${(document.size / 1024).toFixed(1)} KB` : `${(document.size / (1024 * 1024)).toFixed(1)} MB`}
               </p>
             </div>
           </div>

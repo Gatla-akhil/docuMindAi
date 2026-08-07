@@ -362,7 +362,9 @@ const UploadPage = () => {
                   {file ? (
                     <div className="space-y-1">
                       <p className="font-bold text-sm text-indigo-600 dark:text-indigo-400">{file.name}</p>
-                      <p className="text-xs text-slate-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      <p className="text-xs text-slate-400">
+                        {file.size < 1024 * 1024 ? `${(file.size / 1024).toFixed(1)} KB` : `${(file.size / (1024 * 1024)).toFixed(2)} MB`}
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-1">

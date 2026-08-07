@@ -70,14 +70,32 @@ const { protect } = require('./middlewares/authMiddleware');
 // Static uploads directory (Protected: requires valid authorization bearer token or query token)
 app.use('/uploads', protect, express.static(path.join(__dirname, 'uploads')));
 
-// Health Check API
+const upload = require('./middlewares/uploadMiddleware');
+const { uploadDocument } = require('./controllers/documentController');
+
+// Health Check APIs
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    geminiConfigured: !!process.env.GEMINI_API_KEY
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({
-    status: 'online',
+    success: true,
+    status: 'healthy',
+    geminiConfigured: !!process.env.GEMINI_API_KEY,
     timestamp: new Date().toISOString(),
     version: '1.0.0'
   });
 });
+
+// Direct Process, Upload, and Convert Endpoints (Unprotected fallback for guest quick-conversions)
+app.post('/api/process-document', upload.single('file'), uploadDocument);
+app.post('/api/upload', upload.single('file'), uploadDocument);
+app.post('/api/convert', upload.single('file'), uploadDocument);
 
 // API Routes Mount
 app.use('/api/auth', authRoutes);

@@ -150,7 +150,13 @@ const uploadDocument = async (req, res, next) => {
     }
     memoryDb.activityLogs.unshift(logEntry);
 
-    return sendSuccess(res, 'Document uploaded and analyzed successfully', { document: createdDoc }, 201);
+    return res.status(201).json({
+      success: true,
+      message: 'Document uploaded and analyzed successfully',
+      text: createdDoc.textExtracted,
+      summary: createdDoc.summary,
+      data: { document: createdDoc }
+    });
   } catch (error) {
     if (req.file && fs.existsSync(req.file.path)) {
       try { fs.unlinkSync(req.file.path); } catch (e) {}
