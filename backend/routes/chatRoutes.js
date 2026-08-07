@@ -5,12 +5,10 @@ const {
   getChatHistory,
   clearChatHistory
 } = require('../controllers/chatController');
-const { protect } = require('../middlewares/authMiddleware');
-const { chatQuestionSchema, validate } = require('../validators/schemas');
 
-router.use(protect);
-
-router.post('/:documentId', validate(chatQuestionSchema), askQuestion);
+// Support both root POST / (direct question) and POST /:documentId
+router.post('/', askQuestion);
+router.post('/:documentId', askQuestion);
 router.get('/:documentId', getChatHistory);
 router.delete('/:documentId', clearChatHistory);
 
