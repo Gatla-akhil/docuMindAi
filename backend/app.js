@@ -73,6 +73,13 @@ app.use('/uploads', protect, express.static(path.join(__dirname, 'uploads')));
 const upload = require('./middlewares/uploadMiddleware');
 const { uploadDocument } = require('./controllers/documentController');
 
+const uploadRoutes = require('./routes/uploadRoutes');
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('DocuMind AI Backend Running');
+});
+
 // Health Check APIs
 app.get('/health', (req, res) => {
   res.status(200).json({
