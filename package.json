@@ -4,12 +4,12 @@
   "description": "Full Stack Intelligent Document Processing AI Platform",
   "main": "api/index.js",
   "scripts": {
-    "postinstall": "npm install --prefix frontend",
+    "postinstall": "npm install --prefix frontend && (chmod +x frontend/node_modules/.bin/* 2>/dev/null || true)",
     "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "npm run build --prefix frontend"
+    "build": "cd frontend && node node_modules/vite/bin/vite.js build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
