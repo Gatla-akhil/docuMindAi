@@ -115,11 +115,14 @@ const register = async (req, res, next) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    return sendSuccess(res, 'User registered successfully', {
-      user: normalizeUser(user),
+    return res.status(201).json({
+      success: true,
+      message: 'Registration Successful',
+      token: accessToken,
       accessToken,
-      refreshToken
-    }, 201);
+      refreshToken,
+      user: normalizeUser(user)
+    });
   } catch (error) {
     next(error);
   }
@@ -147,7 +150,7 @@ const login = async (req, res, next) => {
             if (memUser && memUser.password) {
               const memMatch = await bcrypt.compare(password, memUser.password);
               if (memMatch) {
-                dbUser.password = password; // pre('save') hook will single-hash it cleanly
+                dbUser.password = password;
                 await dbUser.save();
                 isMatch = true;
               }
@@ -179,17 +182,20 @@ const login = async (req, res, next) => {
     }
 
     if (!user) {
-      return sendError(res, 'Login failed. Please check your credentials.', 401);
+      return sendError(res, 'Wrong Password or User not found', 400);
     }
 
     const sanitized = normalizeUser(user);
     const accessToken = generateAccessToken(sanitized);
-    const refreshToken = generateRefreshToken(sanitized);
+    const refreshTokenToken = generateRefreshToken(sanitized);
 
-    return sendSuccess(res, 'Login successful', {
-      user: sanitized,
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token: accessToken,
       accessToken,
-      refreshToken
+      refreshToken: refreshTokenToken,
+      user: sanitized
     });
   } catch (error) {
     next(error);
