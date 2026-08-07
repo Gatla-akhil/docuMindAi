@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { downloadDocumentFile } from '../services/api';
 import toast from 'react-hot-toast';
 import {
   Trophy,
@@ -276,16 +276,14 @@ Target Language: ${targetLang.toUpperCase()}`;
                   <span>Open Full Report & Social Post Designer</span>
                 </button>
 
-                <a
-                  href={`/api/documents/${sportsResult.doc._id}/download?format=pdf`}
-                  target="_blank"
-                  rel="noreferrer"
-                  download="sports_coaching_report.pdf"
+                <button
+                  onClick={() => downloadDocumentFile(sportsResult.doc._id, 'pdf', 'sports_coaching_report.pdf')}
                   className="py-3 px-4 rounded-xl font-bold text-xs bg-slate-800 text-white hover:bg-slate-700 transition-colors flex items-center space-x-1.5"
+                  title="Download PDF Report"
                 >
                   <Download className="w-4 h-4" />
                   <span>PDF</span>
-                </a>
+                </button>
               </div>
             </div>
           ) : (

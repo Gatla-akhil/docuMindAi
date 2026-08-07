@@ -9,10 +9,13 @@ const protect = async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.startsWith('Bearer ') &&
+    req.headers.authorization.split(' ')[1] &&
+    req.headers.authorization.split(' ')[1] !== 'null' &&
+    req.headers.authorization.split(' ')[1] !== 'undefined'
   ) {
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.query && req.query.token) {
+  } else if (req.query && req.query.token && req.query.token !== 'null' && req.query.token !== 'undefined') {
     // Support JWT token via query parameter for direct file downloads
     token = req.query.token;
   }

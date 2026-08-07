@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { downloadDocumentFile } from '../services/api';
 import toast from 'react-hot-toast';
 import { TableRowSkeleton } from '../components/LoadingSkeleton';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -155,16 +155,13 @@ const HistoryPage = () => {
                           <MessageSquare className="w-4 h-4" />
                         </Link>
 
-                        <a
-                          href={`/api/documents/${docId}/download?format=json`}
-                          target="_blank"
-                          rel="noreferrer"
-                          download={`${doc.originalName}-analysis.json`}
+                        <button
+                          onClick={() => downloadDocumentFile(docId, 'json', `${doc.originalName || 'document'}-analysis.json`)}
                           className="p-1.5 text-slate-400 hover:text-slate-200 inline-block"
-                          title="Download JSON"
+                          title="Download JSON Analysis"
                         >
                           <Download className="w-4 h-4" />
-                        </a>
+                        </button>
 
                         <button
                           onClick={() => setDeleteDoc(doc)}

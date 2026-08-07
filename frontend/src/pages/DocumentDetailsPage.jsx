@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { downloadDocumentFile } from '../services/api';
 import toast from 'react-hot-toast';
 import { DetailSkeleton } from '../components/LoadingSkeleton';
 import EntityCard from '../components/EntityCard';
@@ -222,16 +222,40 @@ const DocumentDetailsPage = () => {
               <span>{copied ? 'Copied Text!' : 'Copy Conversation'}</span>
             </button>
 
-            <a
-              href={`/api/documents/${docId}/download?format=txt`}
-              target="_blank"
-              rel="noreferrer"
-              download={`${document.originalName}-conversation.txt`}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-colors flex items-center space-x-1.5"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download Text (.txt)</span>
-            </a>
+            <div className="flex items-center space-x-1 border border-slate-200 dark:border-slate-800 rounded-xl p-1 bg-white/50 dark:bg-slate-900/50">
+              <button
+                onClick={() => downloadDocumentFile(docId, 'pdf', `${document.originalName || 'document'}-report.pdf`)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 transition-colors flex items-center space-x-1"
+                title="Download PDF Report"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>PDF</span>
+              </button>
+              <button
+                onClick={() => downloadDocumentFile(docId, 'json', `${document.originalName || 'document'}-analysis.json`)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 transition-colors flex items-center space-x-1"
+                title="Download JSON Analysis"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>JSON</span>
+              </button>
+              <button
+                onClick={() => downloadDocumentFile(docId, 'csv', `${document.originalName || 'document'}-data.csv`)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 transition-colors flex items-center space-x-1"
+                title="Download CSV Table"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>CSV</span>
+              </button>
+              <button
+                onClick={() => downloadDocumentFile(docId, 'txt', `${document.originalName || 'document'}-conversation.txt`)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-500/10 text-blue-600 dark:text-blue-400 transition-colors flex items-center space-x-1"
+                title="Download Pure Text"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>TXT</span>
+              </button>
+            </div>
 
             <button
               onClick={() => setDeleteModalOpen(true)}

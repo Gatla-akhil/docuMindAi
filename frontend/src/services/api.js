@@ -56,4 +56,32 @@ api.interceptors.response.use(
   }
 );
 
+export const getAuthDownloadUrl = (docId, format = 'json') => {
+  const token = localStorage.getItem('accessToken');
+  return `/api/documents/${docId}/download?format=${format}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
+};
+
+export const downloadDocumentFile = async (docId, format = 'json', defaultFilename = 'download') => {
+  try {
+    const response = await api.get(`/documents/${docId}/download?format=${format}`, {
+      responseType: 'blob'
+    });
+
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([response.data], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', defaultFilename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download via blob failed, falling back to direct URL:', error);
+    const downloadUrl = getAuthDownloadUrl(docId, format);
+    window.open(downloadUrl, '_blank');
+  }
+};
+
 export default api;
