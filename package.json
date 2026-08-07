@@ -9,7 +9,7 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "cd frontend && node node_modules/vite/bin/vite.js build"
+    "build": "cd frontend && node node_modules/vite/bin/vite.js build && cd .. && node -e \"require('fs').cpSync('frontend/dist', 'dist', {recursive: true})\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
