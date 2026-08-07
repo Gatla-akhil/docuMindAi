@@ -129,7 +129,13 @@ const register = async (req, res, next) => {
       token: accessToken,
       accessToken,
       refreshToken: refreshTokenToken,
-      user: finalUser
+      user: finalUser,
+      data: {
+        user: finalUser,
+        token: accessToken,
+        accessToken,
+        refreshToken: refreshTokenToken
+      }
     });
   } catch (error) {
     next(error);
@@ -228,7 +234,13 @@ const login = async (req, res, next) => {
       token: accessToken,
       accessToken,
       refreshToken: refreshTokenToken,
-      user: sanitized
+      user: sanitized,
+      data: {
+        user: sanitized,
+        token: accessToken,
+        accessToken,
+        refreshToken: refreshTokenToken
+      }
     });
   } catch (error) {
     next(error);

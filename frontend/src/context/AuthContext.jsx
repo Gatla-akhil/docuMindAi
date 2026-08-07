@@ -29,15 +29,22 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { user: userData, accessToken, refreshToken } = res.data.data;
+      const payload = res.data.data || res.data;
+      const userData = payload.user;
+      const accessToken = payload.accessToken || payload.token;
+      const refreshToken = payload.refreshToken;
+
+      if (!userData || !accessToken) {
+        throw new Error('Invalid authentication response structure');
+      }
 
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('refreshToken', refreshToken || accessToken);
       setUser(userData);
-      toast.success(`Welcome back, ${userData.name}!`);
+      toast.success(`Welcome back, ${userData.name || 'User'}!`);
       return userData;
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      const msg = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
       toast.error(msg);
       throw new Error(msg);
     }
@@ -46,15 +53,22 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, role = 'user') => {
     try {
       const res = await api.post('/auth/register', { name, email, password, role });
-      const { user: userData, accessToken, refreshToken } = res.data.data;
+      const payload = res.data.data || res.data;
+      const userData = payload.user;
+      const accessToken = payload.accessToken || payload.token;
+      const refreshToken = payload.refreshToken;
+
+      if (!userData || !accessToken) {
+        throw new Error('Invalid registration response structure');
+      }
 
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('refreshToken', refreshToken || accessToken);
       setUser(userData);
       toast.success('Account created successfully!');
       return userData;
     } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed. Please try again.';
+      const msg = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
       toast.error(msg);
       throw new Error(msg);
     }
