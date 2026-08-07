@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "if [ -d \"frontend\" ]; then npm run build --prefix frontend; else npm run build; fi",
-  "outputDirectory": "dist",
+  "buildCommand": "node -e \"const fs=require('fs'); const cp=require('child_process'); if (fs.existsSync('frontend/package.json')) { cp.execSync('npm run build --prefix frontend', {stdio:'inherit'}); } else { cp.execSync('npx vite build', {stdio:'inherit'}); }\"",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
