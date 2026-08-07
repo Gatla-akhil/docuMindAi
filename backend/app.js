@@ -93,6 +93,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Direct Process, Upload, and Convert Endpoints (Unprotected fallback for guest quick-conversions)
+app.post('/upload', upload.single('file'), uploadDocument);
+app.use('/chat', chatRoutes);
 app.post('/api/process-document', upload.single('file'), uploadDocument);
 app.post('/api/upload', upload.single('file'), uploadDocument);
 app.post('/api/convert', upload.single('file'), uploadDocument);
