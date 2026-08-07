@@ -39,18 +39,20 @@ const register = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
 
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
     let existingUser = null;
+
     if (getIsConnected()) {
-      try { existingUser = await User.findOne({ email }); } catch (e) {}
+      try { existingUser = await User.findOne({ email: cleanEmail }); } catch (e) {}
     }
     if (!existingUser && getIsSupabaseConnected()) {
       try {
-        const { data } = await supabase.from('users').select('*').eq('email', email).single();
+        const { data } = await supabase.from('users').select('*').eq('email', cleanEmail).single();
         if (data) existingUser = data;
       } catch (e) {}
     }
     if (!existingUser) {
-      existingUser = memoryDb.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      existingUser = memoryDb.users.find(u => u.email.toLowerCase() === cleanEmail);
     }
 
     if (existingUser) {
@@ -59,27 +61,40 @@ const register = async (req, res, next) => {
 
     const userId = generateId('usr');
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUserObj = {
+    const memUserObj = {
       _id: userId,
       id: userId,
       name,
-      email: email.toLowerCase(),
+      email: cleanEmail,
       password: hashedPassword,
       role: 'user', // Enforce standard 'user' role on self-registration
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    let user = newUserObj;
+    let user = memUserObj;
     if (getIsConnected()) {
       try {
-        const created = await User.create(newUserObj);
+        // Pass unhashed password so UserSchema pre('save') hook hashes it ONCE
+        const created = await User.create({
+          _id: userId,
+          name,
+          email: cleanEmail,
+          password: password,
+          role: 'user'
+        });
         user = normalizeUser(created);
       } catch (dbErr) {
-        memoryDb.users.push(newUserObj);
+        console.warn(`[DB Register Fallback]: ${dbErr.message}`);
       }
+    }
+
+    // Always keep memoryDb synced as a resilient fallback
+    const existingIndex = memoryDb.users.findIndex(u => u.email.toLowerCase() === cleanEmail);
+    if (existingIndex !== -1) {
+      memoryDb.users[existingIndex] = memUserObj;
     } else {
-      memoryDb.users.push(newUserObj);
+      memoryDb.users.push(memUserObj);
     }
 
     // Write to Supabase table if enabled
@@ -88,7 +103,7 @@ const register = async (req, res, next) => {
         await supabase.from('users').insert({
           id: userId,
           name,
-          email: email.toLowerCase(),
+          email: cleanEmail,
           role: 'user',
           created_at: new Date()
         });
@@ -113,20 +128,43 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return sendError(res, 'Please provide both email and password', 400);
+    }
 
+    const cleanEmail = email.trim().toLowerCase();
     let user = null;
+
     if (getIsConnected()) {
       try {
-        const dbUser = await User.findOne({ email: email.toLowerCase() }).select('+password');
+        const dbUser = await User.findOne({ email: cleanEmail }).select('+password');
         if (dbUser) {
-          const isMatch = await dbUser.matchPassword(password);
-          if (isMatch) user = dbUser;
+          let isMatch = await dbUser.matchPassword(password);
+
+          // Self-healing check for legacy double-hashed records
+          if (!isMatch && dbUser.password) {
+            const memUser = memoryDb.users.find(u => u.email.toLowerCase() === cleanEmail);
+            if (memUser && memUser.password) {
+              const memMatch = await bcrypt.compare(password, memUser.password);
+              if (memMatch) {
+                dbUser.password = password; // pre('save') hook will single-hash it cleanly
+                await dbUser.save();
+                isMatch = true;
+              }
+            }
+          }
+
+          if (isMatch) {
+            user = dbUser;
+          }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('[Mongo Login Error]:', err.message);
+      }
     }
 
     if (!user) {
-      const memUser = memoryDb.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      const memUser = memoryDb.users.find(u => u.email.toLowerCase() === cleanEmail);
       if (memUser) {
         let isMatch = false;
         if (memUser.password && (memUser.password.startsWith('$2a$') || memUser.password.startsWith('$2b$') || memUser.password.startsWith('$2y$'))) {
@@ -134,12 +172,14 @@ const login = async (req, res, next) => {
         } else {
           isMatch = (memUser.password === password);
         }
-        if (isMatch) user = memUser;
+        if (isMatch) {
+          user = memUser;
+        }
       }
     }
 
     if (!user) {
-      return sendError(res, 'Invalid credentials', 401);
+      return sendError(res, 'Login failed. Please check your credentials.', 401);
     }
 
     const sanitized = normalizeUser(user);
