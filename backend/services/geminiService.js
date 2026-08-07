@@ -354,44 +354,20 @@ ${truncatedText}
 const answerDocumentQuestion = async (documentText, question, chatHistory = []) => {
   const genAI = getGeminiClient();
   const truncatedText = (documentText || '').slice(0, 15000);
+  const lowerQ = (question || '').toLowerCase().trim();
 
-  if (!genAI) {
-    const lowerQ = question.toLowerCase();
-    const entities = extractEntitiesRegex(truncatedText);
+  if (genAI && truncatedText) {
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const formattedHistory = chatHistory
+        .slice(-6)
+        .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+        .join('\n');
 
-    if (lowerQ.includes('summary') || lowerQ.includes('about')) {
-      return generateSmartSummary(truncatedText, 'Document');
-    }
-    if (lowerQ.includes('email') || lowerQ.includes('contact')) {
-      return entities.emails.length ? `Extracted emails: ${entities.emails.join(', ')}` : 'No email addresses were found.';
-    }
-    if (lowerQ.includes('amount') || lowerQ.includes('total')) {
-      return entities.amounts.length ? `Extracted financial amounts: ${entities.amounts.join(', ')}` : 'No financial amounts identified.';
-    }
-    if (lowerQ.includes('speaker') || lowerQ.includes('conversation')) {
-      return `Meeting Conversation Excerpt:\n"${truncatedText.slice(0, 400)}..."`;
-    }
+      const prompt = `
+You are an intelligent AI Document & Conversation Assistant interacting directly with a user. 
 
-    const qWords = lowerQ.split(/\s+/).filter(w => w.length > 3);
-    const lines = truncatedText.split('\n').filter(Boolean);
-    const matchingLines = lines.filter(line => qWords.some(w => line.toLowerCase().includes(w)));
-
-    if (matchingLines.length > 0) {
-      return `Relevant excerpt from document:\n\n"${matchingLines.slice(0, 3).join('\n')}"`;
-    }
-
-    return `Based on document context: "${truncatedText.slice(0, 300)}..."`;
-  }
-
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const formattedHistory = chatHistory
-      .slice(-6)
-      .map(m => `${m.role.toUpperCase()}: ${m.content}`)
-      .join('\n');
-
-    const prompt = `
-You are an expert AI assistant answering questions based strictly on the provided document context.
+Your goal is to provide helpful, clear, precise, and user-tailored answers based on the provided document context and user question.
 
 DOCUMENT CONTEXT:
 """
@@ -403,13 +379,95 @@ ${formattedHistory}
 
 USER QUESTION:
 ${question}
+
+RESPONSE RULES:
+- Directly answer the user's specific question according to their intent.
+- Respond in a natural, polite, and well-structured format (use bullet points or lists where appropriate).
+- If the user greets you (e.g. "hi", "hello"), greet them back warmly and state what document you are analyzing for them.
+- If the question asks for explanations, summaries, key facts, or specific data points, extract and explain them clearly.
+- If the question asks in a specific language (e.g. Telugu, Hindi, Spanish), respond in that language.
 `;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
-  } catch (error) {
-    return `Based on document context: "${truncatedText.slice(0, 250)}..."`;
+      const result = await model.generateContent(prompt);
+      const resText = result.response.text().trim();
+      if (resText && resText.length > 5) {
+        return resText;
+      }
+    } catch (error) {
+      console.warn(`[Gemini RAG Warning]: ${error.message}. Switching to Smart Local RAG.`);
+    }
   }
+
+  // Smart Contextual RAG Fallback Engine
+  const entities = extractEntitiesRegex(truncatedText);
+
+  // 1. Greetings & Casual Conversational Queries
+  if (/^(hi|hello|hey|greetings|good morning|good afternoon|good evening|who are you|help|namaste)/i.test(lowerQ)) {
+    const docTitle = truncatedText.split('\n')[0].replace(/^\[|\]$/g, '').slice(0, 80) || 'Uploaded Document';
+    return `Hello! 👋 I am your AI Document Assistant. I have analyzed your document (${docTitle}) and am ready to answer any questions. What would you like to know?`;
+  }
+
+  // 2. Summary & Overview Requests
+  if (lowerQ.includes('summary') || lowerQ.includes('about') || lowerQ.includes('overview') || lowerQ.includes('main point') || lowerQ.includes('takeaway')) {
+    const summary = generateSmartSummary(truncatedText, 'Document');
+    return `📌 **Document Executive Summary & Key Takeaways:**\n\n${summary}`;
+  }
+
+  // 3. Contact & Communication Details
+  if (lowerQ.includes('email') || lowerQ.includes('contact') || lowerQ.includes('phone') || lowerQ.includes('address') || lowerQ.includes('who')) {
+    const info = [];
+    if (entities.names.length) info.push(`👤 **People / Speakers Identified:** ${entities.names.join(', ')}`);
+    if (entities.emails.length) info.push(`📧 **Email Addresses:** ${entities.emails.join(', ')}`);
+    if (entities.phoneNumbers.length) info.push(`📞 **Phone Numbers:** ${entities.phoneNumbers.join(', ')}`);
+    if (entities.addresses.length) info.push(`📍 **Addresses:** ${entities.addresses.join('; ')}`);
+    return info.length > 0 ? info.join('\n\n') : 'No specific names, emails, or contact phone numbers were detected in this document.';
+  }
+
+  // 4. Financial & Payment Queries
+  if (lowerQ.includes('amount') || lowerQ.includes('total') || lowerQ.includes('price') || lowerQ.includes('cost') || lowerQ.includes('invoice') || lowerQ.includes('gst') || lowerQ.includes('pan') || lowerQ.includes('pay')) {
+    const fin = [];
+    if (entities.amounts.length) fin.push(`💰 **Financial Amounts:** ${entities.amounts.join(', ')}`);
+    if (entities.invoiceNumbers.length) fin.push(`🧾 **Invoice Reference Numbers:** ${entities.invoiceNumbers.join(', ')}`);
+    if (entities.gstNumbers.length) fin.push(`🏛️ **GSTIN Numbers:** ${entities.gstNumbers.join(', ')}`);
+    if (entities.panNumbers.length) fin.push(`💳 **PAN Numbers:** ${entities.panNumbers.join(', ')}`);
+    if (entities.dates.length) fin.push(`📅 **Dates Mentioned:** ${entities.dates.join(', ')}`);
+    return fin.length > 0 ? fin.join('\n\n') : 'No specific financial amounts or invoice numbers were identified in this file.';
+  }
+
+  // 5. Risks & Compliance Queries
+  if (lowerQ.includes('risk') || lowerQ.includes('penalty') || lowerQ.includes('warning') || lowerQ.includes('late') || lowerQ.includes('due')) {
+    const risks = detectRiskFlags(truncatedText);
+    if (risks.length > 0) {
+      return `⚠️ **Risk & Compliance Flags Detected:**\n\n` + risks.map(r => `• **${r.issue}** (${r.severity} Severity): ${r.description}`).join('\n');
+    }
+    return '✅ No high-priority risk factors or penalty clauses were identified in this document.';
+  }
+
+  // 6. Intelligent Line & Keyword Search RAG Matching
+  const qWords = lowerQ
+    .replace(/[^\w\s]/gi, '')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !['what', 'when', 'where', 'which', 'who', 'how', 'does', 'this', 'that', 'with', 'from', 'have', 'were'].includes(w));
+
+  const lines = truncatedText
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 5 && !l.startsWith('===') && !l.startsWith('---'));
+
+  const scoredLines = lines.map(line => {
+    const lineLower = line.toLowerCase();
+    const matches = qWords.filter(w => lineLower.includes(w)).length;
+    return { line, score: matches };
+  }).filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+
+  if (scoredLines.length > 0) {
+    const topLines = scoredLines.slice(0, 4).map(item => `• ${item.line}`);
+    return `🔍 **Information Found Regarding Your Question:**\n\n${topLines.join('\n\n')}`;
+  }
+
+  // 7. General Document Context Answer Synthesis
+  const previewSentences = lines.slice(0, 4).join('\n• ');
+  return `📄 **Key Information from Document:**\n\n• ${previewSentences || 'Document text parsed successfully.'}\n\n*Feel free to ask for specific details, names, financial numbers, or summaries!*`;
 };
 
 /**
