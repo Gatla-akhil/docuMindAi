@@ -142,18 +142,26 @@ const login = async (req, res, next) => {
       try {
         const dbUser = await User.findOne({ email: cleanEmail }).select('+password');
         if (dbUser) {
-          let isMatch = await dbUser.matchPassword(password);
+          let isMatch = false;
+          try {
+            isMatch = await dbUser.matchPassword(password);
+          } catch (e) {}
 
-          // Self-healing check for legacy double-hashed records
+          // Robust fallbacks for single-hash, double-hash, or plain text matches
           if (!isMatch && dbUser.password) {
-            const memUser = memoryDb.users.find(u => u.email.toLowerCase() === cleanEmail);
-            if (memUser && memUser.password) {
-              const memMatch = await bcrypt.compare(password, memUser.password);
-              if (memMatch) {
-                dbUser.password = password;
+            try {
+              isMatch = await bcrypt.compare(password, dbUser.password);
+            } catch (e) {}
+
+            if (!isMatch) {
+              isMatch = (dbUser.password === password);
+            }
+
+            if (isMatch) {
+              try {
+                dbUser.password = password; // Mongoose pre('save') hook single-hashes it cleanly
                 await dbUser.save();
-                isMatch = true;
-              }
+              } catch (e) {}
             }
           }
 
@@ -177,12 +185,29 @@ const login = async (req, res, next) => {
         }
         if (isMatch) {
           user = memUser;
+          if (getIsConnected()) {
+            try {
+              const existingMongo = await User.findOne({ email: cleanEmail });
+              if (!existingMongo) {
+                await User.create({
+                  _id: memUser._id || memUser.id,
+                  name: memUser.name,
+                  email: cleanEmail,
+                  password: password,
+                  role: memUser.role || 'user'
+                });
+              }
+            } catch (e) {}
+          }
         }
       }
     }
 
     if (!user) {
-      return sendError(res, 'Wrong Password or User not found', 400);
+      return res.status(400).json({
+        success: false,
+        message: 'Login failed. Wrong password or user not found. Please register first or check your credentials.'
+      });
     }
 
     const sanitized = normalizeUser(user);
